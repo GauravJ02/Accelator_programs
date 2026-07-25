@@ -252,14 +252,154 @@ vitals = pd.read_csv("vitals.csv")
 
 merged = patients.merge(treatments, on="PatientID").merge(billing, on="PatientID").merge(vitals, on="PatientID")
 print("Complete Hospital Report")
-print(merged.to_string(index=False,header=False),"\n")
+# print(merged.to_string(index=False,header=False),"\n")
+for _, row in merged.iterrows():
+    print(
+        row["PatientID"],
+        row["PatientName"],
+        row["Department"],
+        row["Age"],
+        row["ConsultationCost"],
+        row["LabCost"],
+        row["PharmacyCost"],
+        row["AdmissionDate"],
+        "nan" if pd.isna(row["TotalBill"]) else row["TotalBill"],
+        "nan" if pd.isna(row["BloodPressure"]) else row["BloodPressure"],
+    )
+print()
 
 print("Missing Values")
-print(merged.isnull().to_string(index=False,header=False),"\n")
+# print(merged.isnull().to_string(index=False,header=False),"\n")
+missing = merged.isnull()
+
+for _, row in missing.iterrows():
+    print(*row.tolist())
+print()
 
 print("Recovered Dataset")
 average_bill = merged["TotalBill"].mean()
-recovered_data = merged["TotalBill"].fillna(average_bill)
-recovered_data["BloodPressure"] = merged["BloodPressure"].interpolate()
-recovered_data = recovered_data.drop_duplicates(subset=["PatientID"])
-print(recovered_data[["PatientID","PatientName","Department","Age","TotalBill","BloodPressure"]].to_string(index=False,header=False),"\n")
+merged["TotalBill"] = merged["TotalBill"].fillna(average_bill)
+merged["BloodPressure"] = merged["BloodPressure"].interpolate()
+merged = merged.drop_duplicates()
+recovered_data = merged.copy()
+# print(recovered_data[["PatientID","PatientName","Department","Age","TotalBill","BloodPressure"]].round(2).to_string(index=False,header=False),"\n")
+for _, row in recovered_data.iterrows():
+    print(
+        row["PatientID"],
+        row["PatientName"],
+        row["Department"],
+        row["Age"],
+        round(row["TotalBill"], 2),
+        round(row["BloodPressure"], 2),
+    )
+print()
+
+print("Monthly Hospital Revenue")
+recovered_data["AdmissionDate"] = pd.to_datetime(recovered_data["AdmissionDate"])
+recovered_data = recovered_data.set_index("AdmissionDate")
+monthly_revenue = recovered_data["TotalBill"].resample("M").sum()
+monthly_revenue.index = monthly_revenue.index.to_period("M").astype(str)
+# print(monthly_revenue.round(2).to_string(header=False),"\n")
+for month, revenue in monthly_revenue.items():
+    print(month, round(revenue, 2))
+print()
+
+print("Department Revenue")
+dept_revenue = recovered_data.groupby("Department")["TotalBill"].sum()
+# print(dept_revenue.round(2).to_string(header=False),"\n")
+for dept, revenue in dept_revenue.items():
+    print(dept, round(revenue, 2))
+print()
+
+print("Department Revenue Pivot Table\n")
+recovered_data["Month"] = recovered_data.index.to_period("M")
+dept_rev_pivot = recovered_data.pivot_table(index="Department",values="TotalBill",columns="Month",aggfunc="sum",fill_value=0).astype(float)
+dept_rev_pivot.columns.name = "OrderDate"
+# print(dept_rev_pivot.round(2).to_string(),"\n")
+print("OrderDate    2025-01  2025-02  2025-03")
+print("Department")
+
+for dept, row in dept_rev_pivot.iterrows():
+    print(
+        dept,
+        round(row.iloc[0], 2),
+        round(row.iloc[1], 2),
+        round(row.iloc[2], 2),
+    )
+print()
+
+print("Treatment Long Format")
+long_format = recovered_data.melt(id_vars=["PatientID","PatientName"], value_vars=["ConsultationCost","LabCost","PharmacyCost"])
+# print(long_format.to_string(index=False,header=False),"\n")
+for _, row in long_format.iterrows():
+    print(
+        row["PatientID"],
+        row["PatientName"],
+        row["variable"],
+        row["value"],
+    )
+print()
+
+print("Reconstructed Treatment Dataset")
+print()
+original_table = long_format.pivot(index="PatientID",columns="variable",values="value").reset_index()
+original_table = original_table.merge(recovered_data[["PatientID", "PatientName"]],on="PatientID")
+# print("Treatment",original_table[["PatientID","PatientName","ConsultationCost","LabCost","PharmacyCost"]].to_string(),"\n")
+print("Treatment PatientID PatientName ConsultationCost LabCost PharmacyCost")
+for i, row in original_table.iterrows():
+    print(
+        i,
+        row["PatientID"],
+        row["PatientName"],
+        row["ConsultationCost"],
+        row["LabCost"],
+        row["PharmacyCost"],
+    )
+print()
+
+print("Cardiology Patients")
+cad_pat = recovered_data.loc[recovered_data["Department"]=="Cardiology"]
+# print(cad_pat[["PatientID", "PatientName", "TotalBill"]].to_string(index=False,header=False),"\n")
+for _, row in cad_pat.iterrows():
+    print(
+        row["PatientID"],
+        row["PatientName"],
+        row["TotalBill"]
+    )
+print()
+
+print("Second and Third Patients")
+second = recovered_data.iloc[1:3]
+# print(second[["PatientID", "PatientName", "Department"]].round(2).to_string(index=False,header=False),"\n")
+for _, row in second.iterrows():
+    print(
+        row["PatientID"],
+        row["PatientName"],
+        row["Department"],
+    )
+print()
+
+print("Insurance Bonus")
+total_bill = recovered_data["TotalBill"].to_numpy()
+in_bonus = total_bill * 0.05
+recovered_data["in_bonus"] = in_bonus
+# print(recovered_data["in_bonus"].round(2).to_string(index=False,header=False),"\n")
+for value in recovered_data["in_bonus"]:
+    print(round(value, 2))
+print()
+
+print("Final Bill")
+final_bill = total_bill + in_bonus
+recovered_data["final_bill"] = final_bill
+# print(recovered_data["final_bill"].round(2).to_string(index=False,header=False),"\n")
+for value in recovered_data["final_bill"]:
+    print(round(value, 2))
+print()
+
+print("Highest Revenue Department")
+highest_rev = recovered_data.groupby("Department")["TotalBill"].sum()
+print(f"{highest_rev.idxmax()} {highest_rev.max():.2f}","\n")
+
+print("Highest Bill Patient")
+highest_bill = recovered_data.groupby(["PatientID","PatientName"])["TotalBill"].sum()
+print(highest_bill.idxmax()[0],highest_bill.idxmax()[1],highest_bill.max())
