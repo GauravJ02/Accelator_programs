@@ -58,6 +58,7 @@ surcharge = fuel_eff.copy()
 mask = surcharge < 4
 surcharge[mask] = 15
 surcharge[~(mask)] = 0
+#better approach use np.where(condition,True_value,False_Value)
 total = base_cost + surcharge
 
 fleet_logs["KML"] = fuel_eff.round(2)
