@@ -239,281 +239,281 @@ print(cust_revenue.idxmax(),cust_revenue.max())
 
 ## ALTERNATE VERSION OF SIR
 
-import pandas as pd
-import numpy as np
+    import pandas as pd
+    import numpy as np
 
-try:
+    try:
 
-    customers = pd.read_csv("customers.csv")
+        customers = pd.read_csv("customers.csv")
 
-    products = pd.read_csv("products.csv")
+        products = pd.read_csv("products.csv")
 
-    orders = pd.read_csv("orders.csv")
+        orders = pd.read_csv("orders.csv")
 
-    payments = pd.read_csv("payments.csv")
+        payments = pd.read_csv("payments.csv")
 
-    if (
-        customers.empty
-        or products.empty
-        or orders.empty
-        or payments.empty
-    ):
+        if (
+            customers.empty
+            or products.empty
+            or orders.empty
+            or payments.empty
+        ):
 
-        print("Empty Dataset")
+            print("Empty Dataset")
 
-    else:
+        else:
 
-        merged = pd.merge(
+            merged = pd.merge(
 
-            orders,
+                orders,
 
-            customers,
+                customers,
 
-            on="CustomerID",
+                on="CustomerID",
 
-            sort=False
-
-        )
-
-        merged = pd.merge(
-
-            merged,
-
-            products,
-
-            on="ProductID",
-
-            sort=False
-
-        )
-
-        merged = pd.merge(
-
-            merged,
-
-            payments,
-
-            on="OrderID",
-
-            sort=False
-
-        )
-
-        merged["OrderDate"] = pd.to_datetime(
-
-            merged["OrderDate"]
-
-        )
-
-        merged = merged.sort_values(
-
-            by="OrderDate"
-
-        )
-
-        merged = merged.set_index(
-
-            "OrderDate"
-
-        )
-
-        print("Complete Business Report")
-
-        for index, row in merged.iterrows():
-
-            print(
-
-                row["OrderID"],
-
-                row["CustomerName"],
-
-                row["City"],
-
-                row["ProductName"],
-
-                row["Category"],
-
-                int(row["Quantity"]),
-
-                int(row["PaymentAmount"])
+                sort=False
 
             )
 
-        print()
+            merged = pd.merge(
 
-        print("Electronics Orders")
+                merged,
 
-        electronics = merged.loc[
+                products,
 
-            merged["Category"] == "Electronics"
+                on="ProductID",
 
-        ]
-
-        for index, row in electronics.iterrows():
-
-            print(
-
-                row["OrderID"],
-
-                row["CustomerName"],
-
-                row["ProductName"],
-
-                int(row["PaymentAmount"])
+                sort=False
 
             )
 
-        print()
+            merged = pd.merge(
 
-        print("Second and Third Orders")
+                merged,
 
-        second_third = merged.iloc[1:3]
+                payments,
 
-        for index, row in second_third.iterrows():
+                on="OrderID",
 
-            print(
-
-                row["OrderID"],
-
-                row["CustomerName"],
-
-                row["ProductName"],
-
-                int(row["PaymentAmount"])
+                sort=False
 
             )
 
-        print()
+            merged["OrderDate"] = pd.to_datetime(
 
-        monthly = merged.resample(
-            "M"
-        )["PaymentAmount"].sum()
-
-        print("Monthly Revenue Report")
-
-        for date, revenue in monthly.items():
-
-            print(
-                date.strftime("%Y-%m"),
-                int(revenue)
-            )
-
-        print()
-
-        pivot = pd.pivot_table(
-
-            merged,
-
-            values="PaymentAmount",
-
-            index="Category",
-
-            columns=merged.index.strftime("%Y-%m"),
-
-            aggfunc="sum",
-
-            fill_value=0
-
-        )
-
-        print("Category-wise Monthly Revenue Pivot Table")
-
-        print()
-
-        months = sorted(pivot.columns.tolist())
-
-        print("Category", *months)
-
-        for category_name in pivot.index:
-
-            print(
-
-                category_name,
-
-                *[int(pivot.loc[category_name, month]) for month in months]
+                merged["OrderDate"]
 
             )
 
-        print()
+            merged = merged.sort_values(
 
-        print("Category Revenue Report")
-
-        category = merged.groupby(
-
-            "Category"
-
-        )["PaymentAmount"].sum().sort_values(
-
-            ascending=False
-
-        )
-
-        for name, amount in category.items():
-
-            print(
-
-                name,
-
-                int(amount)
+                by="OrderDate"
 
             )
 
-        print()
+            merged = merged.set_index(
 
-        print("Updated Revenue (10% Bonus)")
-
-        payment = merged["PaymentAmount"].to_numpy()
-
-        bonus = payment * 0.10
-
-        final_revenue = payment + bonus
-
-        for i in range(len(payment)):
-
-            print(
-
-                int(payment[i]),
-
-                round(float(bonus[i]), 1),
-
-                round(float(final_revenue[i]), 1)
+                "OrderDate"
 
             )
 
-        print()
+            print("Complete Business Report")
 
-        print("Highest Revenue Category")
+            for index, row in merged.iterrows():
 
-        print(
+                print(
 
-            category.index[0],
+                    row["OrderID"],
 
-            int(category.iloc[0])
+                    row["CustomerName"],
 
-        )
+                    row["City"],
 
-        print()
+                    row["ProductName"],
 
-        customer = merged.groupby(
+                    row["Category"],
 
-            "CustomerName"
+                    int(row["Quantity"]),
 
-        )["PaymentAmount"].sum().sort_values(
+                    int(row["PaymentAmount"])
 
-            ascending=False
+                )
 
-        )
+            print()
 
-        print("Highest Spending Customer")
+            print("Electronics Orders")
 
-        print(
+            electronics = merged.loc[
 
-            customer.index[0],
+                merged["Category"] == "Electronics"
 
-            int(customer.iloc[0])
+            ]
 
-        )
+            for index, row in electronics.iterrows():
 
-except FileNotFoundError:
+                print(
 
-    print("File Not Found")
+                    row["OrderID"],
+
+                    row["CustomerName"],
+
+                    row["ProductName"],
+
+                    int(row["PaymentAmount"])
+
+                )
+
+            print()
+
+            print("Second and Third Orders")
+
+            second_third = merged.iloc[1:3]
+
+            for index, row in second_third.iterrows():
+
+                print(
+
+                    row["OrderID"],
+
+                    row["CustomerName"],
+
+                    row["ProductName"],
+
+                    int(row["PaymentAmount"])
+
+                )
+
+            print()
+
+            monthly = merged.resample(
+                "M"
+            )["PaymentAmount"].sum()
+
+            print("Monthly Revenue Report")
+
+            for date, revenue in monthly.items():
+
+                print(
+                    date.strftime("%Y-%m"),
+                    int(revenue)
+                )
+
+            print()
+
+            pivot = pd.pivot_table(
+
+                merged,
+
+                values="PaymentAmount",
+
+                index="Category",
+
+                columns=merged.index.strftime("%Y-%m"),
+
+                aggfunc="sum",
+
+                fill_value=0
+
+            )
+
+            print("Category-wise Monthly Revenue Pivot Table")
+
+            print()
+
+            months = sorted(pivot.columns.tolist())
+
+            print("Category", *months)
+
+            for category_name in pivot.index:
+
+                print(
+
+                    category_name,
+
+                    *[int(pivot.loc[category_name, month]) for month in months]
+
+                )
+
+            print()
+
+            print("Category Revenue Report")
+
+            category = merged.groupby(
+
+                "Category"
+
+            )["PaymentAmount"].sum().sort_values(
+
+                ascending=False
+
+            )
+
+            for name, amount in category.items():
+
+                print(
+
+                    name,
+
+                    int(amount)
+
+                )
+
+            print()
+
+            print("Updated Revenue (10% Bonus)")
+
+            payment = merged["PaymentAmount"].to_numpy()
+
+            bonus = payment * 0.10
+
+            final_revenue = payment + bonus
+
+            for i in range(len(payment)):
+
+                print(
+
+                    int(payment[i]),
+
+                    round(float(bonus[i]), 1),
+
+                    round(float(final_revenue[i]), 1)
+
+                )
+
+            print()
+
+            print("Highest Revenue Category")
+
+            print(
+
+                category.index[0],
+
+                int(category.iloc[0])
+
+            )
+
+            print()
+
+            customer = merged.groupby(
+
+                "CustomerName"
+
+            )["PaymentAmount"].sum().sort_values(
+
+                ascending=False
+
+            )
+
+            print("Highest Spending Customer")
+
+            print(
+
+                customer.index[0],
+
+                int(customer.iloc[0])
+
+            )
+
+    except FileNotFoundError:
+
+        print("File Not Found")
