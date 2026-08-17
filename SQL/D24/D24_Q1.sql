@@ -1,0 +1,40 @@
+/*
+Problem Statement
+
+An online food delivery company wants to identify its premium customers based on their purchase history. Every customer may place multiple orders throughout the month. 
+The finance department first prepares a summary report showing the total amount spent by each customer and then identifies customers whose total spending is greater than ₹500. 
+
+The management wants this report to be easy to understand and maintain.
+
+Write an SQL query to generate the report.
+
+Tables Used
+Customers
+Orders
+
+YOur Task:Generate a report containing
+
+Customer ID
+Total Amount Spent
+
+Display only those customers whose total spending is greater than ₹1500.
+
+
+customer_id	TotalSpent
+1	730.00
+2	680.00
+3	860.00
+4	1020.00
+5	920.00
+
+*/
+use fs;
+
+SELECT
+    c.customer_id,
+    SUM(o.total_amount) AS TotalSpent
+FROM Customers c
+JOIN Orders o
+    ON c.customer_id = o.customer_id
+GROUP BY c.customer_id
+HAVING SUM(o.total_amount) > 500;
