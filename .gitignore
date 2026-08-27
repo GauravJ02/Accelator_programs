@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Large exported notes (kept outside the repo)
+Accelator Notes/
